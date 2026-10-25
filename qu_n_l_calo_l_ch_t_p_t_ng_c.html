@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymBro VN - Quản Lý Calo & Lịch Tập Tăng Cơ (T2, T5, T6, T7, CN)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        emerald: {
+                            450: '#10b981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .neon-border-emerald {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+        }
+        .neon-border-orange {
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.15);
+        }
+        /* SVG Circle Progress Transition */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950 pb-24 md:pb-10">
+
+    <!-- Top Navigation / Header -->
+    <header class="sticky top-0 z-30 glass-card border-b border-slate-800/80 px-4 py-3 sm:px-6">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white">GYMBRO <span class="text-emerald-400">LEAN BULK</span></h1>
+                        <span class="hidden sm:inline-block text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Tăng Cơ Tối Ưu</span>
+                    </div>
+                    <p class="text-xs text-slate-400" id="currentDateDisplay">Lịch tập: Thứ 2, 5, 6, 7, Chủ Nhật (5 buổi/tuần)</p>
+                </div>
+            </div>
+
+            <!-- Main Navigation Tabs (Desktop) -->
+            <div class="hidden md:flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+                <button onclick="switchMainTab('dashboard')" id="tabBtn-dashboard" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-emerald-500 text-slate-950 shadow">
+                    <i class="fa-solid fa-fire-flame-curved"></i> Dinh Dưỡng & Calo
+                </button>
+                <button onclick="switchMainTab('workout')" id="tabBtn-workout" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-calendar-check"></i> Lịch Tập (T2, 5, 6, 7, CN)
+                </button>
+                <button onclick="switchMainTab('calculator')" id="tabBtn-calculator" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-sliders"></i> Cài Đặt TDEE & Chỉ Số
+                </button>
+            </div>
+
+            <!-- Quick Rest Timer Trigger & Reset -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleTimerModal()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 font-bold text-xs sm:text-sm transition-all">
+                    <i class="fa-solid fa-stopwatch animate-pulse"></i>
+                    <span id="headerTimerText">Bấm giờ nghỉ</span>
+                </button>
+                <button onclick="openResetModal()" title="Làm mới ngày mới" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm transition-all">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Weekly Schedule Strip (Always visible for motivation & quick day jump) -->
+        <section class="glass-card rounded-2xl p-4 border border-slate-800/90">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300">Lịch Trình Tuần Này (Split 5 Buổi: Upper/Lower + PPL)</h2>
+                </div>
+                <span class="text-xs text-emerald-400 font-medium cursor-pointer hover:underline" onclick="switchMainTab('workout')">Xem chi tiết bài tập <i class="fa-solid fa-arrow-right ml-1"></i></span>
+            </div>
+            <div class="grid grid-cols-7 gap-1.5 sm:gap-2.5" id="weeklyBannerGrid">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 1: CALORIE & MACRO TRACKER (DASHBOARD)
+             ========================================== -->
+        <div id="tabContent-dashboard" class="space-y-6">
+            <!-- Top Overview Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left: Calorie Progress Ring & Summary (5 cols) -->
+                <div class="lg:col-span-5 glass-card rounded-2xl p-5 sm:p-6 neon-border-emerald flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-emerald-400"></i> Tổng Quan Năng Lượng
+                            </h3>
+                            <p class="text-xs text-slate-400">Mục tiêu: <span class="text-emerald-400 font-semibold">Lean Bulk (Tăng cơ sạch)</span></p>
+                        </div>
+                        <button onclick="switchMainTab('calculator')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            <i class="fa-solid fa-pen mr-1"></i>Sửa mục tiêu
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-around my-4 gap-6">
+                        <!-- SVG Ring -->
+                        <div class="relative w-44 h-44 flex items-center justify-center">
+                            <svg class="w-44 h-44" viewBox="0 0 160 160">
+                                <circle cx="80" cy="80" r="68" stroke="#1e293b" stroke-width="12" fill="transparent" />
+                                <circle id="calorieRingCircle" class="progress-ring__circle" cx="80" cy="80" r="68" stroke="#10b981" stroke-width="12" stroke-linecap="round" fill="transparent" stroke-dasharray="427.25" stroke-dashoffset="427.25" />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <span class="text-xs uppercase font-bold text-slate-400 tracking-wider" id="calRingStatusLabel">Còn lại</span>
+                                <span class="text-3xl font-black text-white tracking-tight" id="calRemainingValue">2600</span>
+                                <span class="text-[11px] font-semibold text-emerald-400">kcal</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Breakdown -->
+                        <div class="w-full sm:w-auto flex-1 space-y-3">
+                            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-bullseye"></i></div>
+                                    <div>
+                                        <p class="text-[11px] text-slate-400">Mục tiêu Tăng cơ</p>
+                                        <p class="text-sm font-bold text-white"><span id="calTargetDisplay">2600</span> kcal</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-utensils"></i></div>
+                                    <div>
+                                        <p class="text-[11px] text-slate-400">Đã nạp hôm nay</p>
+                                        <p class="text-sm font-bold text-emerald-400"><span id="calEatenDisplay">0</span> kcal</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center"><i class="fa-solid fa-fire"></i></div>
+                                    <div>
+                                        <p class="text-[11px] text-slate-400">TDEE giữ cân</p>
+                                        <p class="text-sm font-bold text-orange-400"><span id="tdeeBaseDisplay">2200</span> kcal</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-slate-400 bg-slate-900/70 rounded-xl p-3 border border-slate-800/80 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-emerald-400"></i>
+                        <span id="calorieAdviceText">Hãy nạp dư 300-400 kcal và đủ 2g Protein/kg cân nặng để tối ưu tổng hợp cơ bắp.</span>
+                    </div>
+                </div>
+
+                <!-- Right: Macros & Water Tracker (7 cols) -->
+                <div class="lg:col-span-7 glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-orange-400"></i> Chỉ Số Đa Lượng (Macros)
+                            </h3>
+                            <span class="text-xs text-slate-400">Tỷ lệ chuẩn Hypertrophy</span>
+                        </div>
+
+                        <!-- 3 Macro Bars -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Protein -->
+                            <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-drumstick-bite"></i> Protein (Đạm)
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-400" id="proteinPercent">0%</span>
+                                </div>
+                                <div class="flex items-baseline gap-1 my-1">
+                                    <span class="text-2xl font-black text-white" id="proteinEaten">0</span>
+                                    <span class="text-xs text-slate-400">/ <span id="proteinTarget">130</span>g</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mt-2">
+                                    <div id="proteinBar" class="h-full bg-gradient-to-r from-rose-500 to-pink-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-2">Xây dựng & phục hồi sợi cơ</p>
+                            </div>
+
+                            <!-- Carbs -->
+                            <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-bowl-rice"></i> Tinh bột (Carb)
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-400" id="carbsPercent">0%</span>
+                                </div>
+                                <div class="flex items-baseline gap-1 my-1">
+                                    <span class="text-2xl font-black text-white" id="carbsEaten">0</span>
+                                    <span class="text-xs text-slate-400">/ <span id="carbsTarget">340</span>g</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mt-2">
+                                    <div id="carbsBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-2">Năng lượng đẩy tạ nặng</p>
+                            </div>
+
+                            <!-- Fat -->
+                            <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-droplet"></i> Chất béo (Fat)
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-400" id="fatPercent">0%</span>
+                                </div>
+                                <div class="flex items-baseline gap-1 my-1">
+                                    <span class="text-2xl font-black text-white" id="fatEaten">0</span>
+                                    <span class="text-xs text-slate-400">/ <span id="fatTarget">70</span>g</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mt-2">
+                                    <div id="fatBar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-2">Tối ưu Hormone Testosterone</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Water Intake Tracker -->
+                    <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-glass-water"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Theo Dõi Lượng Nước Uống</h4>
+                                    <p class="text-xs text-slate-400">Cơ bắp chứa 75% là nước - Đừng để mất nước khi tập!</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg font-black text-sky-400" id="waterCurrentDisplay">0</span>
+                                <span class="text-xs text-slate-400">/ 3000 ml</span>
+                            </div>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mb-3">
+                            <div id="waterBar" class="h-full bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <button onclick="addWater(250)" class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold transition">+250ml (1 cốc)</button>
+                                <button onclick="addWater(500)" class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold transition">+500ml (1 bình)</button>
+                                <button onclick="addWater(750)" class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold transition">+750ml (Shaker)</button>
+                            </div>
+                            <button onclick="addWater(-250)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-semibold transition">-250ml</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Food Quick Add & Daily Food Log -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Quick Add Vietnamese Gym Foods & Custom Entry (7 cols) -->
+                <div class="lg:col-span-7 glass-card rounded-2xl p-5 sm:p-6 space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-utensils text-emerald-400"></i> Thêm Món Ăn Nhanh (Chuẩn Gymer Việt)
+                            </h3>
+                            <p class="text-xs text-slate-400">Chọn buổi ăn rồi bấm vào món có sẵn hoặc tự nhập bên dưới</p>
+                        </div>
+                        <!-- Meal Time Selector -->
+                        <select id="quickMealType" class="bg-slate-900 border border-slate-700 text-emerald-400 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500">
+                            <option value="Sáng">🌅 Bữa Sáng</option>
+                            <option value="Trưa">☀️ Bữa Trưa</option>
+                            <option value="Trước/Sau Tập" selected>⚡ Trước / Sau Tập</option>
+                            <option value="Tối">🌙 Bữa Tối</option>
+                        </select>
+                    </div>
+
+                    <!-- Category Filter Pills -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+                        <button onclick="filterFoodPresets('all')" id="foodFilter-all" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 whitespace-nowrap">Tất cả</button>
+                        <button onclick="filterFoodPresets('protein')" id="foodFilter-protein" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Giàu Đạm (Protein)</button>
+                        <button onclick="filterFoodPresets('carb')" id="foodFilter-carb" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Tinh Bột & Cơm</button>
+                        <button onclick="filterFoodPresets('vn')" id="foodFilter-vn" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap">Món Việt & Đồ Uống</button>
+                    </div>
+
+                    <!-- Preset Food Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1" id="presetFoodGrid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Custom Food Form -->
+                    <div class="pt-4 border-t border-slate-800">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus-circle text-emerald-400"></i> Tự Nhập Món Ăn Tùy Chỉnh
+                        </h4>
+                        <form onsubmit="handleCustomFoodSubmit(event)" class="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                            <input type="text" id="customFoodName" required placeholder="Tên món (VD: Cơm tấm sườn)" class="col-span-2 sm:col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <input type="number" id="customFoodCal" required min="0" placeholder="Calo (kcal)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <input type="number" id="customFoodPro" required min="0" placeholder="Đạm (g)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <input type="number" id="customFoodCarb" required min="0" placeholder="Carb (g)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <input type="number" id="customFoodFat" required min="0" placeholder="Fat (g)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <button type="submit" class="col-span-2 sm:col-span-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Thêm Vào Nhật Ký Hôm Nay
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Daily Food Log List (5 cols) -->
+                <div class="lg:col-span-5 glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-clipboard-list text-orange-400"></i> Nhật Ký Ăn Uống Hôm Nay
+                                </h3>
+                                <p class="text-xs text-slate-400" id="foodLogCountText">Chưa có món ăn nào</p>
+                            </div>
+                            <button onclick="clearFoodLogs()" class="text-xs text-rose-400 hover:text-rose-300 font-semibold px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 transition">
+                                Xóa hết
+                            </button>
+                        </div>
+
+                        <!-- Food Log Container -->
+                        <div id="dailyFoodLogList" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Bulking Tip Box -->
+                    <div class="mt-4 bg-gradient-to-r from-emerald-950/70 to-slate-900 p-3.5 rounded-xl border border-emerald-500/30">
+                        <p class="text-xs font-bold text-emerald-400 mb-1"><i class="fa-solid fa-lightbulb mr-1"></i> Mẹo Tăng Cơ Cho Học Sinh / Sinh Viên:</p>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            Nếu khó ăn đủ calo, hãy chia thành 4 bữa. Trước khi tập 60-90 phút nên ăn 1-2 quả chuối hoặc khoai lang/cơm để có sức đẩy mức tạ nặng hơn (Progressive Overload).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 2: WORKOUT SCHEDULE & LOGGER (T2, 5, 6, 7, CN)
+             ========================================== -->
+        <div id="tabContent-workout" class="hidden space-y-6">
+            
+            <!-- Workout Header & Equipment Mode Toggle -->
+            <div class="glass-card rounded-2xl p-5 sm:p-6 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-orange-500/20 text-orange-400 border border-orange-500/30">HYPERTROPHY SPLIT</span>
+                        <h2 class="text-lg sm:text-xl font-black text-white">Lịch Tập Tăng Cơ 5 Buổi/Tuần (Thứ 2, 5, 6, 7, CN)</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                        Thiết kế khoa học giúp mỗi nhóm cơ được kích thích <strong class="text-emerald-400">2 lần/tuần</strong>. Nghỉ hồi phục vào Thứ 3 & Thứ 4.
+                    </p>
+                </div>
+
+                <!-- Gym vs Home Dumbbell Switcher -->
+                <div class="flex items-center bg-slate-900 p-1.5 rounded-xl border border-slate-700 self-stretch md:self-auto justify-center">
+                    <button onclick="setEquipmentMode('gym')" id="equipBtn-gym" class="flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow">
+                        <i class="fa-solid fa-dumbbell"></i> Phòng Gym (Máy & Tạ)
+                    </button>
+                    <button onclick="setEquipmentMode('home')" id="equipBtn-home" class="flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-house-chimney"></i> Tại Nhà (Tạ Đơn/Bodyweight)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Day Selector Buttons (7 Days) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5" id="workoutDayTabs">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Active Day Workout Details -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Column: Exercise List & Logger (8 cols) -->
+                <div class="lg:col-span-8 space-y-4" id="workoutDayContainer">
+                    <!-- Populated dynamically by JS -->
+                </div>
+
+                <!-- Right Column: Session Stats, Volume & Hypertrophy Guide (4 cols) -->
+                <div class="lg:col-span-4 space-y-5">
+                    <!-- Today's Workout Progress Card -->
+                    <div class="glass-card rounded-2xl p-5 neon-border-orange space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-simple text-orange-400"></i> Thống Kê Buổi Tập
+                            </h3>
+                            <span id="workoutDayBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">Thứ 2</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
+                                <p class="text-[11px] text-slate-400">Số Hiệp Hoàn Thành</p>
+                                <p class="text-2xl font-black text-emerald-400 mt-1"><span id="completedSetsCount">0</span> <span class="text-xs text-slate-400 font-normal">/ <span id="totalSetsCount">0</span> sets</span></p>
+                            </div>
+                            <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
+                                <p class="text-[11px] text-slate-400">Tổng Volume (Khối lượng)</p>
+                                <p class="text-2xl font-black text-orange-400 mt-1"><span id="totalVolumeCount">0</span> <span class="text-xs text-slate-400 font-normal">kg</span></p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="text-slate-400">Tiến độ buổi tập</span>
+                                <span class="font-bold text-emerald-400" id="workoutProgressPercent">0%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="workoutProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Embedded Rest Timer -->
+                        <div class="bg-slate-900/95 p-4 rounded-xl border border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-clock"></i> Đồng Hồ Nghỉ Giữa Hiệp
+                                </span>
+                                <span class="text-xl font-black font-mono text-white" id="inlineTimerDisplay">01:30</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="startRestTimer(60)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition">60 Giây</button>
+                                <button onclick="startRestTimer(90)" class="py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-xs font-bold text-orange-300 border border-orange-500/30 transition">90 Giây</button>
+                                <button onclick="startRestTimer(120)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition">120 Giây</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Why Mon, Thu, Fri, Sat, Sun works -->
+                    <div class="glass-card rounded-2xl p-5 space-y-3">
+                        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-emerald-400"></i> Giải Thích Lịch Tập 2-5-6-7-CN
+                        </h4>
+                        <ul class="text-xs text-slate-300 space-y-2.5 leading-relaxed">
+                            <li class="flex items-start gap-2">
+                                <span class="text-emerald-400 font-bold">•</span>
+                                <span><strong>Thứ 2 (Upper Body):</strong> Sau Chủ Nhật, tập toàn bộ thân trên với mức tạ nặng khi cơ thể nhiều năng lượng.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-slate-400 font-bold">•</span>
+                                <span><strong>Thứ 3 & Thứ 4 (Nghỉ):</strong> 48 giờ vàng để hệ thần kinh và cơ bắp siêu bù (Supercompensation), rất hợp lịch học bận rộn giữa tuần.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-emerald-400 font-bold">•</span>
+                                <span><strong>Thứ 5 (Lower + Core):</strong> Tập Chân & Bụng ngay sau 2 ngày nghỉ giúp squat/deadlift cực khỏe mà không ảnh hưởng thân trên.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-orange-400 font-bold">•</span>
+                                <span><strong>Thứ 6 (Push) - Thứ 7 (Pull) - CN (Legs & Weak Points):</strong> Chuỗi 3 ngày cuối tuần chia nhóm cơ Đẩy - Kéo - Chân riêng biệt nên không bị trùng nhóm cơ dù tập liên tiếp!</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 3: TDEE & LEAN BULK CALCULATOR
+             ========================================== -->
+        <div id="tabContent-calculator" class="hidden space-y-6">
+            <div class="max-w-4xl mx-auto glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-emerald-400"></i> Tính TDEE & Thiết Lập Mục Tiêu Tăng Cơ (Lean Bulk)
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                        Nhập chỉ số cơ thể của bạn để hệ thống tự động tính lượng Calo, Protein (2g/kg), Carb và Fat chuẩn xác nhất.
+                    </p>
+                </div>
+
+                <form onsubmit="saveUserProfile(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-300 mb-2">Giới tính</label>
+                        <select id="calcGender" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <option value="male" selected>Nam giới</option>
+                            <option value="female">Nữ giới</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-300 mb-2">Độ tuổi (Năm)</label>
+                        <input type="number" id="calcAge" min="12" max="80" value="17" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-300 mb-2">Cân nặng hiện tại (kg)</label>
+                        <input type="number" id="calcWeight" step="0.5" min="35" max="180" value="62" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-300 mb-2">Chiều cao (cm)</label>
+                        <input type="number" id="calcHeight" min="130" max="220" value="172" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-300 mb-2">Cường độ vận động (Mặc định 5 buổi/tuần)</label>
+                        <select id="calcActivity" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <option value="1.375">Tập nhẹ (1-3 buổi/tuần)</option>
+                            <option value="1.55" selected>Tập vừa phải (4-5 buổi/tuần - Lịch T2,5,6,7,CN)</option>
+                            <option value="1.725">Vận động nặng (Tập nặng + Chơi thể thao)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-300 mb-2">Mức dư Calo (Calorie Surplus)</label>
+                        <select id="calcSurplus" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <option value="300">+300 kcal/ngày (Lean Bulk - Tăng cơ nét, ít mỡ)</option>
+                            <option value="400" selected>+400 kcal/ngày (Tiêu chuẩn Tăng Cơ Tối Ưu)</option>
+                            <option value="500">+500 kcal/ngày (Bulk nhanh cho người gầy khó lên cân)</option>
+                            <option value="0">0 kcal (Recomp - Giữ cân tăng cơ giảm mỡ)</option>
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-2 pt-2">
+                        <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check-circle"></i> Lưu Chỉ Số & Cập Nhật Mục Tiêu Dinh Dưỡng
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Preview Result Box -->
+                <div class="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <p class="text-xs text-slate-400">BMR Cơ Bản</p>
+                        <p class="text-lg font-black text-white mt-1"><span id="previewBmr">1630</span> kcal</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">TDEE Giữ Cân</p>
+                        <p class="text-lg font-black text-orange-400 mt-1"><span id="previewTdee">2526</span> kcal</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Mục Tiêu Tăng Cơ</p>
+                        <p class="text-lg font-black text-emerald-400 mt-1"><span id="previewTargetCal">2926</span> kcal</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Đạm (2.0g / kg)</p>
+                        <p class="text-lg font-black text-rose-400 mt-1"><span id="previewProtein">124</span> g</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Floating Bottom Navigation for Mobile -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-slate-800 px-3 py-2 flex items-center justify-around">
+        <button onclick="switchMainTab('dashboard')" id="mobTab-dashboard" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-emerald-400 font-bold text-xs">
+            <i class="fa-solid fa-fire-flame-curved text-base"></i>
+            <span>Calo & Macro</span>
+        </button>
+        <button onclick="switchMainTab('workout')" id="mobTab-workout" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-slate-400 font-medium text-xs">
+            <i class="fa-solid fa-calendar-check text-base"></i>
+            <span>Lịch Tập (5 Buổi)</span>
+        </button>
+        <button onclick="switchMainTab('calculator')" id="mobTab-calculator" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-slate-400 font-medium text-xs">
+            <i class="fa-solid fa-sliders text-base"></i>
+            <span>Tính TDEE</span>
+        </button>
+    </nav>
+
+    <!-- Rest Timer Floating Modal -->
+    <div id="timerModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl max-w-sm w-full p-6 border border-slate-700 shadow-2xl space-y-5 text-center">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-stopwatch text-orange-400"></i> Đồng Hồ Nghỉ Giữa Hiệp
+                </h3>
+                <button onclick="toggleTimerModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="py-6 bg-slate-900 rounded-2xl border border-slate-800">
+                <p class="text-5xl font-black font-mono text-emerald-400 tracking-wider" id="modalTimerDisplay">01:30</p>
+                <p class="text-xs text-slate-400 mt-2" id="modalTimerStatus">Chọn thời gian nghỉ bên dưới</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+                <button onclick="startRestTimer(60)" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white border border-slate-700">60s (Cô lập)</button>
+                <button onclick="startRestTimer(90)" class="py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-xs font-bold text-emerald-400 border border-emerald-500/30">90s (Chuẩn)</button>
+                <button onclick="startRestTimer(120)" class="py-2.5 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-xs font-bold text-orange-400 border border-orange-500/30">120s (Compound)</button>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="pauseRestTimer()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">Tạm dừng / Tiếp tục</button>
+                <button onclick="resetRestTimer()" class="py-2.5 px-4 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-xs font-bold text-rose-400">Đặt lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Reset Confirmation Modal (No browser alert/confirm) -->
+    <div id="resetModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl max-w-sm w-full p-6 border border-slate-700 shadow-2xl space-y-4">
+            <div class="flex items-center gap-3 text-amber-400">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <h3 class="text-base font-bold text-white">Bắt Đầu Ngày Mới?</h3>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Bạn muốn làm mới nhật ký ăn uống & lượng nước hôm nay hay đặt lại toàn bộ tiến độ bài tập trong tuần?
+            </p>
+            <div class="space-y-2 pt-2">
+                <button onclick="confirmResetDayNutrition()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition">
+                    Chỉ làm mới Calo & Nước uống hôm nay
+                </button>
+                <button onclick="confirmResetWorkoutProgress()" class="w-full py-2.5 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30 font-bold text-xs transition">
+                    Làm mới dấu tích các hiệp tập tuần này
+                </button>
+                <button onclick="closeResetModal()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 font-semibold text-xs transition">
+                    Hủy bỏ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-20 md:bottom-6 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 border border-emerald-500/50 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+            <span id="toastMessage">Đã cập nhật!</span>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // =========================================================================
+        // 1. VIETNAMESE GYM FOODS DATABASE
+        // =========================================================================
+        const PRESET_FOODS = [
+            { id: 'f1', name: 'Ức gà áp chảo (150g)', cal: 248, pro: 46, carb: 0, fat: 5, cat: 'protein', icon: '🍗' },
+            { id: 'f2', name: 'Trứng gà luộc (2 quả)', cal: 155, pro: 13, carb: 1, fat: 11, cat: 'protein', icon: '🥚' },
+            { id: 'f3', name: 'Thịt bò xào/áp chảo (150g)', cal: 330, pro: 39, carb: 0, fat: 18, cat: 'protein', icon: '🥩' },
+            { id: 'f4', name: 'Whey Protein (1 muỗng)', cal: 120, pro: 24, carb: 3, fat: 1, cat: 'protein', icon: '🥤' },
+            { id: 'f5', name: 'Thịt heo nạc vai (150g)', cal: 290, pro: 33, carb: 0, fat: 16, cat: 'protein', icon: '🍖' },
+            { id: 'f6', name: 'Cá hồi / Cá basa (150g)', cal: 280, pro: 30, carb: 0, fat: 16, cat: 'protein', icon: '🐟' },
+            { id: 'f7', name: 'Cơm trắng (2 chén vừa)', cal: 400, pro: 8, carb: 88, fat: 1, cat: 'carb', icon: '🍚' },
+            { id: 'f8', name: 'Cơm trắng (1 chén vừa)', cal: 200, pro: 4, carb: 44, fat: 0.5, cat: 'carb', icon: '🍚' },
+            { id: 'f9', name: 'Khoai lang luộc (1 củ 200g)', cal: 172, pro: 3, carb: 40, fat: 0, cat: 'carb', icon: '🍠' },
+            { id: 'f10', name: 'Yến mạch (60g khô)', cal: 230, pro: 8, carb: 40, fat: 4, cat: 'carb', icon: '🥣' },
+            { id: 'f11', name: 'Chuối tiêu (2 quả trước tập)', cal: 210, pro: 2.6, carb: 54, fat: 0.8, cat: 'carb', icon: '🍌' },
+            { id: 'f12', name: 'Bánh mì nguyên cám (2 lát)', cal: 160, pro: 7, carb: 28, fat: 2, cat: 'carb', icon: '🍞' },
+            { id: 'f13', name: 'Phở bò tái nạm (1 tô)', cal: 480, pro: 28, carb: 62, fat: 12, cat: 'vn', icon: '🍜' },
+            { id: 'f14', name: 'Bún chả Hà Nội (1 suất)', cal: 550, pro: 26, carb: 65, fat: 20, cat: 'vn', icon: '🥢' },
+            { id: 'f15', name: 'Bánh mì thịt trứng (1 ổ)', cal: 420, pro: 18, carb: 52, fat: 15, cat: 'vn', icon: '🥖' },
+            { id: 'f16', name: 'Sữa tươi không đường (1 bịch 220ml)', cal: 110, pro: 7, carb: 10, fat: 4.5, cat: 'vn', icon: '🥛' },
+            { id: 'f17', name: 'Sữa chua Hy Lạp / Vinamilk (1 hộp)', cal: 105, pro: 5, carb: 14, fat: 3, cat: 'vn', icon: '🍨' },
+            { id: 'f18', name: 'Monster Energy Ultra Trắng (Lon)', cal: 10, pro: 0, carb: 2, fat: 0, cat: 'vn', icon: '⚡' }
+        ];
+
+        // =========================================================================
+        // 2. WORKOUT SCHEDULE DATA (Mon, Thu, Fri, Sat, Sun - 5 Days Hypertrophy)
+        // =========================================================================
+        const WORKOUT_SCHEDULE = [
+            {
+                dayKey: 'mon',
+                dayNumber: 1,
+                shortLabel: 'Thứ 2',
+                title: 'Upper Body (Toàn Bộ Thân Trên)',
+                subtitle: 'Ngực • Lưng Xô • Vai • Tay Trước & Tay Sau',
+                isRest: false,
+                focusTag: 'Compound & Sức Mạnh',
+                tip: 'Sau ngày Chủ Nhật, hãy khởi động kỹ khớp vai và tập trung đẩy/kéo mức tạ nặng ở 2 bài đầu tiên.',
+                exercises: [
+                    {
+                        id: 'mon_1',
+                        gymName: 'Đẩy ngực ngang (Barbell / Dumbbell Bench Press)',
+                        homeName: 'Đẩy ngực với tạ đơn trên sàn hoặc Hít đất kê cao chân',
+                        muscle: 'Ngực giữa, Tay sau, Vai trước',
+                        sets: 4,
+                        reps: '8 - 10',
+                        rest: 120,
+                        defaultWeight: 40
+                    },
+                    {
+                        id: 'mon_2',
+                        gymName: 'Kéo xô rộng tay (Lat Pulldown) hoặc Hít xà đơn (Pull-up)',
+                        homeName: 'Chèo tạ đơn 1 tay (Single-Arm Dumbbell Row)',
+                        muscle: 'Lưng xô (Tạo độ rộng chữ V)',
+                        sets: 4,
+                        reps: '8 - 12',
+                        rest: 90,
+                        defaultWeight: 45
+                    },
+                    {
+                        id: 'mon_3',
+                        gymName: 'Đẩy vai ngồi với tạ đơn (Seated Dumbbell Overhead Press)',
+                        homeName: 'Đẩy vai ngồi/đứng với tạ đơn (Dumbbell Shoulder Press)',
+                        muscle: 'Cơ vai trước & vai giữa',
+                        sets: 3,
+                        reps: '8 - 10',
+                        rest: 90,
+                        defaultWeight: 14
+                    },
+                    {
+                        id: 'mon_4',
+                        gymName: 'Ngồi kéo cáp lưng giữa (Seated Cable Row)',
+                        homeName: 'Gập người chèo 2 tạ đơn (Bent-Over Dumbbell Row)',
+                        muscle: 'Lưng giữa (Độ dày lưng)',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 90,
+                        defaultWeight: 40
+                    },
+                    {
+                        id: 'mon_5',
+                        gymName: 'Bay vai ngang với tạ đơn (Dumbbell Lateral Raise)',
+                        homeName: 'Bay vai ngang với tạ đơn (Dumbbell Lateral Raise)',
+                        muscle: 'Vai giữa (Giúp vai rộng ngang)',
+                        sets: 4,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 8
+                    },
+                    {
+                        id: 'mon_6',
+                        gymName: 'Superset: Cuốn tạ tay trước + Duỗi cáp tay sau',
+                        homeName: 'Superset: Cuốn tạ đơn (Bicep Curl) + Đá tạ tay sau (Kickback)',
+                        muscle: 'Tay trước (Biceps) & Tay sau (Triceps)',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 60,
+                        defaultWeight: 12
+                    }
+                ]
+            },
+            {
+                dayKey: 'tue',
+                dayNumber: 2,
+                shortLabel: 'Thứ 3',
+                title: 'Nghỉ Ngơi & Phục Hồi Cơ Bắp (Rest Day 1)',
+                subtitle: 'Cơ bắp phát triển trong lúc bạn nghỉ ngơi và ăn ngủ',
+                isRest: true,
+                focusTag: 'Active Recovery',
+                tip: 'Cơ thân trên vừa tập hôm Thứ 2 đang tổng hợp Protein. Hãy ăn đủ đạm, uống 2.5 - 3 lít nước và ngủ đủ 7-8 tiếng.'
+            },
+            {
+                dayKey: 'wed',
+                dayNumber: 3,
+                shortLabel: 'Thứ 4',
+                title: 'Nghỉ Ngơi & Nạp Năng Lượng (Rest Day 2)',
+                subtitle: 'Chuẩn bị thể lực sung mãn cho chuỗi 4 buổi tập T5 - T6 - T7 - CN',
+                isRest: true,
+                focusTag: 'Full Recovery',
+                tip: 'Đi bộ nhẹ nhàng 15-20 phút hoặc giãn cơ. Tối Thứ 4 ăn đầy đủ tinh bột (cơm/khoai) để nạp đầy Glycogen cho buổi tập Chân vào Thứ 5.'
+            },
+            {
+                dayKey: 'thu',
+                dayNumber: 4,
+                shortLabel: 'Thứ 5',
+                title: 'Lower Body & Core (Thân Dưới & Cơ Bụng)',
+                subtitle: 'Đùi trước • Đùi sau • Mông • Bắp chân • Bụng',
+                isRest: false,
+                focusTag: 'Leg Hypertrophy',
+                tip: 'Tập chân vào Thứ 5 giúp phần thân trên tiếp tục được nghỉ hoàn toàn trước khi bước vào ngày Push (Thứ 6) và Pull (Thứ 7).',
+                exercises: [
+                    {
+                        id: 'thu_1',
+                        gymName: 'Gánh tạ đòn (Barbell Back Squat) hoặc Đạp đùi (Leg Press)',
+                        homeName: 'Goblet Squat (Ôm tạ đơn trước ngực Squat sâu)',
+                        muscle: 'Đùi trước (Quads) & Mông',
+                        sets: 4,
+                        reps: '8 - 10',
+                        rest: 120,
+                        defaultWeight: 60
+                    },
+                    {
+                        id: 'thu_2',
+                        gymName: 'Romanian Deadlift (RDL với tạ đòn hoặc tạ đơn)',
+                        homeName: 'Dumbbell Romanian Deadlift (RDL với 2 tạ đơn)',
+                        muscle: 'Đùi sau (Hamstrings) & Mông',
+                        sets: 4,
+                        reps: '8 - 12',
+                        rest: 120,
+                        defaultWeight: 50
+                    },
+                    {
+                        id: 'thu_3',
+                        gymName: 'Đá đùi trước trên máy (Leg Extension)',
+                        homeName: 'Chùng chân bước tới với tạ đơn (Dumbbell Lunges)',
+                        muscle: 'Cô lập đùi trước',
+                        sets: 3,
+                        reps: '12 - 15',
+                        rest: 90,
+                        defaultWeight: 35
+                    },
+                    {
+                        id: 'thu_4',
+                        gymName: 'Móc đùi sau nằm/ngồi (Seated / Lying Leg Curl)',
+                        homeName: 'Glute Bridge / Hip Thrust với tạ đơn đặt trên hông',
+                        muscle: 'Đùi sau & Cơ mông',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 90,
+                        defaultWeight: 30
+                    },
+                    {
+                        id: 'thu_5',
+                        gymName: 'Nhón bắp chân đứng/ngồi (Standing Calf Raise)',
+                        homeName: 'Nhón bắp chân 1 chân cầm tạ đơn trên bậc thềm',
+                        muscle: 'Bắp chân (Calves)',
+                        sets: 4,
+                        reps: '15 - 20',
+                        rest: 60,
+                        defaultWeight: 40
+                    },
+                    {
+                        id: 'thu_6',
+                        gymName: 'Treo người nâng gối (Hanging Leg Raise) hoặc Gập bụng cáp',
+                        homeName: 'Plank (60s) + Gập bụng nâng chân (Leg Raise)',
+                        muscle: 'Cơ bụng 6 múi (Core)',
+                        sets: 3,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 0
+                    }
+                ]
+            },
+            {
+                dayKey: 'fri',
+                dayNumber: 5,
+                shortLabel: 'Thứ 6',
+                title: 'Push Day (Chuyên Sâu Cơ Đẩy)',
+                subtitle: 'Ngực trên • Ngực giữa • Vai trước/giữa • Tay sau',
+                isRest: false,
+                focusTag: 'Chest & Shoulder Pump',
+                tip: 'Tập trung cảm nhận cơ ngực trên (Incline) và vai giữa để tạo khung thân trên dày, thẩm mỹ.',
+                exercises: [
+                    {
+                        id: 'fri_1',
+                        gymName: 'Đẩy ngực dốc lên với tạ đơn (Incline Dumbbell Press)',
+                        homeName: 'Đẩy ngực dốc lên (tựa lưng ghế/gối cao) hoặc Hít đất kê chân cao',
+                        muscle: 'Ngực trên (Upper Chest)',
+                        sets: 4,
+                        reps: '8 - 12',
+                        rest: 90,
+                        defaultWeight: 20
+                    },
+                    {
+                        id: 'fri_2',
+                        gymName: 'Đẩy ngực ngang trên máy (Machine Chest Press) hoặc Xà kép (Dips)',
+                        homeName: 'Đẩy ngực ngang với tạ đơn (Flat Dumbbell Press)',
+                        muscle: 'Ngực giữa & Ngực dưới',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 90,
+                        defaultWeight: 45
+                    },
+                    {
+                        id: 'fri_3',
+                        gymName: 'Ép ngực với cáp hoặc máy (Cable Fly / Pec Deck)',
+                        homeName: 'Dang tạ đơn ép ngực (Dumbbell Chest Fly)',
+                        muscle: 'Rãnh ngực trong',
+                        sets: 3,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 12
+                    },
+                    {
+                        id: 'fri_4',
+                        gymName: 'Bay vai ngang tạ đơn hoặc kéo cáp (Lateral Raise)',
+                        homeName: 'Bay vai ngang tạ đơn kiểm soát chậm (Lateral Raise)',
+                        muscle: 'Cơ vai giữa (3D Delts)',
+                        sets: 4,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 8
+                    },
+                    {
+                        id: 'fri_5',
+                        gymName: 'Duỗi tay sau qua đầu với cáp/tạ đơn (Overhead Tricep Extension)',
+                        homeName: 'Duỗi tạ đơn qua đầu bằng 2 tay (Overhead Dumbbell Extension)',
+                        muscle: 'Đầu dài cơ tay sau (Giúp bắp tay to hơn)',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 60,
+                        defaultWeight: 16
+                    },
+                    {
+                        id: 'fri_6',
+                        gymName: 'Nhấn cáp tay sau với dây thừng (Tricep Rope Pushdown)',
+                        homeName: 'Chống đẩy hẹp tay (Diamond Push-ups) hoặc Bench Dips',
+                        muscle: 'Tay sau (Triceps)',
+                        sets: 3,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 20
+                    }
+                ]
+            },
+            {
+                dayKey: 'sat',
+                dayNumber: 6,
+                shortLabel: 'Thứ 7',
+                title: 'Pull Day (Chuyên Sâu Cơ Kéo)',
+                subtitle: 'Lưng Xô • Lưng trên • Vai sau • Cầu vai • Tay trước',
+                isRest: false,
+                focusTag: 'V-Taper Back & Biceps',
+                tip: 'Khi kéo lưng, hãy tưởng tượng kéo bằng cùi chỏ (khuỷu tay) chứ không dùng lực bàn tay nắm quá chặt để xô vào tối đa.',
+                exercises: [
+                    {
+                        id: 'sat_1',
+                        gymName: 'Hít xà đơn (Pull-ups) hoặc Kéo xô tay hẹp (Close-Grip Pulldown)',
+                        homeName: 'Kéo tạ đơn từ qua đầu (Dumbbell Pullover) hoặc Chèo tạ đơn nặng',
+                        muscle: 'Cơ xô (Lats)',
+                        sets: 4,
+                        reps: '8 - 12',
+                        rest: 90,
+                        defaultWeight: 45
+                    },
+                    {
+                        id: 'sat_2',
+                        gymName: 'Chèo tạ đòn/T-Bar Row hoặc Máy tựa ngực (Chest-Supported Row)',
+                        homeName: 'Chèo 2 tạ đơn gập người (Bent-Over Dumbbell Row)',
+                        muscle: 'Lưng giữa & Lưng trên',
+                        sets: 4,
+                        reps: '8 - 10',
+                        rest: 90,
+                        defaultWeight: 40
+                    },
+                    {
+                        id: 'sat_3',
+                        gymName: 'Kéo dây thừng về phía mặt (Face Pulls) hoặc Máy ép vai sau',
+                        homeName: 'Gập người bay vai sau với tạ đơn (Rear Delt Fly)',
+                        muscle: 'Vai sau (Rear Delts) & Chống gù lưng',
+                        sets: 4,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 15
+                    },
+                    {
+                        id: 'sat_4',
+                        gymName: 'Cuốn tạ đòn EZ hoặc Ghế nghiêng (Incline Dumbbell Curl)',
+                        homeName: 'Cuốn tạ đơn luân phiên (Alternating Dumbbell Bicep Curl)',
+                        muscle: 'Đỉnh cơ tay trước (Biceps Peak)',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 60,
+                        defaultWeight: 12
+                    },
+                    {
+                        id: 'sat_5',
+                        gymName: 'Cuốn tạ kiểu búa (Hammer Curl)',
+                        homeName: 'Cuốn tạ đơn kiểu búa (Dumbbell Hammer Curl)',
+                        muscle: 'Tay trước & Cơ cẳng tay (Brachialis)',
+                        sets: 3,
+                        reps: '10 - 12',
+                        rest: 60,
+                        defaultWeight: 12
+                    }
+                ]
+            },
+            {
+                dayKey: 'sun',
+                dayNumber: 0,
+                shortLabel: 'Chủ Nhật',
+                title: 'Legs & Hypertrophy Weak Points (Chân & Nhóm Cơ Ưu Tiên)',
+                subtitle: 'Đùi • Mông • Bắp chân • Bụng & Bơm máu nhóm cơ yếu',
+                isRest: false,
+                focusTag: 'Hypertrophy Finisher',
+                tip: 'Buổi cuối tuần kết hợp kích thích Chân lần 2 trong tuần với mức tạ vừa phải (10-15 reps) và bổ sung thêm cho Vai/Tay.',
+                exercises: [
+                    {
+                        id: 'sun_1',
+                        gymName: 'Bulgarian Split Squat (Chùng chân sau kê lên ghế)',
+                        homeName: 'Bulgarian Split Squat với tạ đơn (Chân sau kê lên ghế)',
+                        muscle: 'Đùi trước & Cơ mông (Sửa lệch cơ 2 chân)',
+                        sets: 3,
+                        reps: '10 - 12 / chân',
+                        rest: 90,
+                        defaultWeight: 14
+                    },
+                    {
+                        id: 'sun_2',
+                        gymName: 'Đạp đùi (Leg Press) hoặc Hack Squat (Kiểm soát nhịp xuống 3s)',
+                        homeName: 'Sumo Squat với tạ đơn (Đứng rộng chân)',
+                        muscle: 'Đùi tổng hợp & Đùi trong',
+                        sets: 4,
+                        reps: '10 - 12',
+                        rest: 90,
+                        defaultWeight: 80
+                    },
+                    {
+                        id: 'sun_3',
+                        gymName: 'Móc đùi sau (Leg Curl) hoặc Đẩy hông (Hip Thrust)',
+                        homeName: 'Single-Leg Romanian Deadlift (RDL 1 chân với tạ đơn)',
+                        muscle: 'Đùi sau & Mông',
+                        sets: 3,
+                        reps: '12 - 15',
+                        rest: 90,
+                        defaultWeight: 35
+                    },
+                    {
+                        id: 'sun_4',
+                        gymName: 'Nhón bắp chân (Calf Raise) + Gập bụng (Cable Crunch)',
+                        homeName: 'Nhón bắp chân cầm tạ đơn + Gập bụng (Bicycle Crunch)',
+                        muscle: 'Bắp chân & Cơ bụng',
+                        sets: 4,
+                        reps: '15 - 20',
+                        rest: 60,
+                        defaultWeight: 30
+                    },
+                    {
+                        id: 'sun_5',
+                        gymName: 'Bài bổ trợ tự chọn: Bay vai ngang / Bơm ngực / Bơm tay (Pump)',
+                        homeName: 'Bài bổ trợ tự chọn: Bay vai ngang hoặc Hít đất + Cuốn tạ tay',
+                        muscle: 'Nhóm cơ bạn muốn phát triển thêm (Weak Point)',
+                        sets: 3,
+                        reps: '12 - 15',
+                        rest: 60,
+                        defaultWeight: 10
+                    }
+                ]
+            }
+        ];
+
+        // =========================================================================
+        // 3. STATE MANAGEMENT & LOCALSTORAGE
+        // =========================================================================
+        const STORAGE_KEY = 'gymbro_leanbulk_vn_v1';
+
+        let appState = {
+            profile: {
+                gender: 'male',
+                age: 17,
+                weight: 62,
+                height: 172,
+                activity: 1.55,
+                surplus: 400,
+                tdee: 2250,
+                targetCal: 2650,
+                targetPro: 124,
+                targetCarb: 365,
+                targetFat: 74
+            },
+            dailyNutrition: {
+                waterMl: 0,
+                foods: []
+            },
+            workout: {
+                selectedDayKey: 'mon',
+                equipmentMode: 'gym', // 'gym' or 'home'
+                logs: {} // e.g., { 'mon_1_set_1': { weight: 40, reps: 10, done: true } }
+            }
+        };
+
+        let activeFoodFilter = 'all';
+        let restTimerInterval = null;
+        let restTimerSeconds = 90;
+        let isTimerPaused = true;
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    appState = {
+                        ...appState,
+                        ...parsed,
+                        profile: { ...appState.profile, ...(parsed.profile || {}) },
+                        dailyNutrition: { ...appState.dailyNutrition, ...(parsed.dailyNutrition || {}) },
+                        workout: { ...appState.workout, ...(parsed.workout || {}) }
+                    };
+                } else {
+                    // Auto-select today's day of week on first load
+                    const jsDay = new Date().getDay(); // 0=Sun, 1=Mon...
+                    const mapDay = { 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat', 0: 'sun' };
+                    appState.workout.selectedDayKey = mapDay[jsDay] || 'mon';
+                    recalculateTargetsFromProfile();
+                }
+            } catch (e) {
+                console.error('Lỗi đọc dữ liệu LocalStorage:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Lỗi lưu dữ liệu LocalStorage:', e);
+            }
+        }
+
+        // =========================================================================
+        // 4. TDEE & MACRO CALCULATOR LOGIC
+        // =========================================================================
+        function recalculateTargetsFromProfile() {
+            const p = appState.profile;
+            // Mifflin-St Jeor Equation
+            let bmr = (10 * p.weight) + (6.25 * p.height) - (5 * p.age);
+            bmr += (p.gender === 'male') ? 5 : -161;
+            bmr = Math.round(bmr);
+
+            const tdee = Math.round(bmr * p.activity);
+            const targetCal = tdee + p.surplus;
+
+            // Protein: 2.0g per kg of body weight (optimal for hypertrophy)
+            const targetPro = Math.round(p.weight * 2.0);
+            // Fat: ~25% of total calories (1g Fat = 9 kcal)
+            const targetFat = Math.round((targetCal * 0.25) / 9);
+            // Carbs: Remaining calories (1g Carb = 4 kcal, 1g Pro = 4 kcal)
+            const remainingCal = Math.max(0, targetCal - (targetPro * 4) - (targetFat * 9));
+            const targetCarb = Math.round(remainingCal / 4);
+
+            appState.profile.tdee = tdee;
+            appState.profile.targetCal = targetCal;
+            appState.profile.targetPro = targetPro;
+            appState.profile.targetFat = targetFat;
+            appState.profile.targetCarb = targetCarb;
+
+            // Update preview in Calculator Tab
+            const elBmr = document.getElementById('previewBmr');
+            if (elBmr) {
+                elBmr.textContent = bmr;
+                document.getElementById('previewTdee').textContent = tdee;
+                document.getElementById('previewTargetCal').textContent = targetCal;
+                document.getElementById('previewProtein').textContent = targetPro;
+            }
+        }
+
+        function syncCalculatorInputs() {
+            const p = appState.profile;
+            document.getElementById('calcGender').value = p.gender;
+            document.getElementById('calcAge').value = p.age;
+            document.getElementById('calcWeight').value = p.weight;
+            document.getElementById('calcHeight').value = p.height;
+            document.getElementById('calcActivity').value = String(p.activity);
+            document.getElementById('calcSurplus').value = String(p.surplus);
+            recalculateTargetsFromProfile();
+        }
+
+        function saveUserProfile(e) {
+            e.preventDefault();
+            appState.profile.gender = document.getElementById('calcGender').value;
+            appState.profile.age = parseFloat(document.getElementById('calcAge').value) || 17;
+            appState.profile.weight = parseFloat(document.getElementById('calcWeight').value) || 62;
+            appState.profile.height = parseFloat(document.getElementById('calcHeight').value) || 172;
+            appState.profile.activity = parseFloat(document.getElementById('calcActivity').value) || 1.55;
+            appState.profile.surplus = parseInt(document.getElementById('calcSurplus').value, 10) || 400;
+
+            recalculateTargetsFromProfile();
+            saveState();
+            renderNutritionDashboard();
+            showToast('Đã cập nhật TDEE & Mục tiêu Tăng Cơ!');
+            switchMainTab('dashboard');
+        }
+
+        // =========================================================================
+        // 5. CALORIE & MACRO TRACKER RENDERING
+        // =========================================================================
+        function renderNutritionDashboard() {
+            const p = appState.profile;
+            const foods = appState.dailyNutrition.foods || [];
+
+            let totalCal = 0, totalPro = 0, totalCarb = 0, totalFat = 0;
+            foods.forEach(item => {
+                totalCal += Number(item.cal) || 0;
+                totalPro += Number(item.pro) || 0;
+                totalCarb += Number(item.carb) || 0;
+                totalFat += Number(item.fat) || 0;
+            });
+
+            totalCal = Math.round(totalCal);
+            totalPro = Math.round(totalPro);
+            totalCarb = Math.round(totalCarb);
+            totalFat = Math.round(totalFat);
+
+            // Update Numbers
+            document.getElementById('calTargetDisplay').textContent = p.targetCal;
+            document.getElementById('calEatenDisplay').textContent = totalCal;
+            document.getElementById('tdeeBaseDisplay').textContent = p.tdee;
+
+            const remaining = p.targetCal - totalCal;
+            const ringLabel = document.getElementById('calRingStatusLabel');
+            const ringValue = document.getElementById('calRemainingValue');
+            if (remaining >= 0) {
+                ringLabel.textContent = 'Còn cần nạp';
+                ringValue.textContent = remaining;
+                ringValue.className = 'text-3xl font-black text-white tracking-tight';
+            } else {
+                ringLabel.textContent = 'Vượt mục tiêu';
+                ringValue.textContent = '+' + Math.abs(remaining);
+                ringValue.className = 'text-3xl font-black text-orange-400 tracking-tight';
+            }
+
+            // Ring Progress SVG (circumference = 2 * pi * 68 = 427.25)
+            const circumference = 427.25;
+            const ratio = Math.min(1, totalCal / Math.max(1, p.targetCal));
+            const offset = circumference - (ratio * circumference);
+            const circle = document.getElementById('calorieRingCircle');
+            circle.style.strokeDashoffset = offset;
+            circle.setAttribute('stroke', totalCal > p.targetCal + 250 ? '#f97316' : '#10b981');
+
+            // Dynamic advice
+            const adviceEl = document.getElementById('calorieAdviceText');
+            if (totalPro < p.targetPro * 0.7) {
+                adviceEl.innerHTML = `Bạn mới nạp <strong>${totalPro}g/${p.targetPro}g Đạm</strong>. Hãy ưu tiên thêm ức gà, trứng, thịt bò hoặc Whey để cơ phát triển tối đa!`;
+            } else if (remaining > 300) {
+                adviceEl.innerHTML = `Còn thiếu <strong>${remaining} kcal</strong> để đạt ngưỡng Lean Bulk. Hãy ăn thêm bữa phụ trước hoặc sau buổi tập.`;
+            } else {
+                adviceEl.innerHTML = `Tuyệt vời! Bạn đã đạt ngưỡng dinh dưỡng tối ưu để phát triển cơ bắp hôm nay.`;
+            }
+
+            // Macros Bars
+            updateMacroUI('protein', totalPro, p.targetPro);
+            updateMacroUI('carbs', totalCarb, p.targetCarb);
+            updateMacroUI('fat', totalFat, p.targetFat);
+
+            // Water Tracker
+            const water = appState.dailyNutrition.waterMl || 0;
+            document.getElementById('waterCurrentDisplay').textContent = water;
+            const waterPct = Math.min(100, Math.round((water / 3000) * 100));
+            document.getElementById('waterBar').style.width = `${waterPct}%`;
+
+            // Render Food Log
+            renderDailyFoodLog(foods);
+        }
+
+        function updateMacroUI(prefix, eaten, target) {
+            const pct = Math.min(100, Math.round((eaten / Math.max(1, target)) * 100));
+            document.getElementById(`${prefix}Eaten`).textContent = eaten;
+            document.getElementById(`${prefix}Target`).textContent = target;
+            document.getElementById(`${prefix}Percent`).textContent = `${pct}%`;
+            document.getElementById(`${prefix}Bar`).style.width = `${pct}%`;
+        }
+
+        function renderPresetFoods() {
+            const grid = document.getElementById('presetFoodGrid');
+            const filtered = activeFoodFilter === 'all'
+                ? PRESET_FOODS
+                : PRESET_FOODS.filter(f => f.cat === activeFoodFilter);
+
+            grid.innerHTML = filtered.map(food => `
+                <div class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2 transition group">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="text-xl">${food.icon}</span>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-white truncate">${food.name}</p>
+                            <p class="text-[11px] text-slate-400">
+                                <span class="text-emerald-400 font-semibold">${food.cal} kcal</span> • 
+                                <span class="text-rose-400">${food.pro}g P</span> • 
+                                <span class="text-amber-400">${food.carb}g C</span> • 
+                                <span class="text-cyan-400">${food.fat}g F</span>
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="quickAddPresetFood('${food.id}')" class="w-8 h-8 rounded-lg bg-emerald-500/15 group-hover:bg-emerald-500 text-emerald-400 group-hover:text-slate-950 flex items-center justify-center font-bold transition shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function filterFoodPresets(category) {
+            activeFoodFilter = category;
+            ['all', 'protein', 'carb', 'vn'].forEach(cat => {
+                const btn = document.getElementById(`foodFilter-${cat}`);
+                if (cat === category) {
+                    btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 whitespace-nowrap transition';
+                } else {
+                    btn.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition';
+                }
+            });
+            renderPresetFoods();
+        }
+
+        function quickAddPresetFood(foodId) {
+            const preset = PRESET_FOODS.find(f => f.id === foodId);
+            if (!preset) return;
+            const mealType = document.getElementById('quickMealType').value;
+
+            appState.dailyNutrition.foods.unshift({
+                uid: Date.now() + Math.random().toString(36).substring(2, 6),
+                name: preset.name,
+                cal: preset.cal,
+                pro: preset.pro,
+                carb: preset.carb,
+                fat: preset.fat,
+                meal: mealType,
+                icon: preset.icon,
+                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+            });
+
+            saveState();
+            renderNutritionDashboard();
+            showToast(`Đã thêm: ${preset.name} (+${preset.cal} kcal)`);
+        }
+
+        function handleCustomFoodSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('customFoodName').value.trim();
+            const cal = parseFloat(document.getElementById('customFoodCal').value) || 0;
+            const pro = parseFloat(document.getElementById('customFoodPro').value) || 0;
+            const carb = parseFloat(document.getElementById('customFoodCarb').value) || 0;
+            const fat = parseFloat(document.getElementById('customFoodFat').value) || 0;
+            const mealType = document.getElementById('quickMealType').value;
+
+            if (!name) return;
+
+            appState.dailyNutrition.foods.unshift({
+                uid: Date.now() + Math.random().toString(36).substring(2, 6),
+                name,
+                cal,
+                pro,
+                carb,
+                fat,
+                meal: mealType,
+                icon: '🍱',
+                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+            });
+
+            e.target.reset();
+            saveState();
+            renderNutritionDashboard();
+            showToast(`Đã thêm: ${name} (+${cal} kcal)`);
+        }
+
+        function removeFoodLogItem(uid) {
+            appState.dailyNutrition.foods = appState.dailyNutrition.foods.filter(f => f.uid !== uid);
+            saveState();
+            renderNutritionDashboard();
+        }
+
+        function clearFoodLogs() {
+            if (appState.dailyNutrition.foods.length === 0) return;
+            appState.dailyNutrition.foods = [];
+            saveState();
+            renderNutritionDashboard();
+            showToast('Đã xóa danh sách món ăn hôm nay');
+        }
+
+        function addWater(amount) {
+            const current = appState.dailyNutrition.waterMl || 0;
+            appState.dailyNutrition.waterMl = Math.max(0, current + amount);
+            saveState();
+            renderNutritionDashboard();
+            if (amount > 0) showToast(`Đã uống thêm ${amount}ml nước! 💧`);
+        }
+
+        function renderDailyFoodLog(foods) {
+            const listEl = document.getElementById('dailyFoodLogList');
+            const countEl = document.getElementById('foodLogCountText');
+            countEl.textContent = `${foods.length} món đã nạp hôm nay`;
+
+            if (foods.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12 px-4 bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
+                        <i class="fa-solid fa-bowl-food text-3xl text-slate-600 mb-2"></i>
+                        <p class="text-xs sm:text-sm font-semibold text-slate-400">Chưa có món ăn nào được ghi nhận</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Bấm dấu (+) ở danh sách món ăn bên trái để theo dõi Calo & Protein ngay!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = foods.map(item => `
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-lg shrink-0">
+                            ${item.icon || '🍽️'}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">${item.meal}</span>
+                                <p class="text-xs sm:text-sm font-bold text-white truncate">${item.name}</p>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                <strong class="text-emerald-400">${item.cal} kcal</strong> • 
+                                Đạm: <span class="text-rose-400 font-semibold">${item.pro}g</span> • 
+                                Carb: <span class="text-amber-400">${item.carb}g</span> • 
+                                Fat: <span class="text-cyan-400">${item.fat}g</span>
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="removeFoodLogItem('${item.uid}')" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center text-xs transition shrink-0" title="Xóa món này">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // =========================================================================
+        // 6. WORKOUT SCHEDULE & LOGGER (T2, T5, T6, T7, CN)
+        // =========================================================================
+        function renderWeeklyBanner() {
+            const banner = document.getElementById('weeklyBannerGrid');
+            const dayTabs = document.getElementById('workoutDayTabs');
+            const jsDay = new Date().getDay();
+            const selectedKey = appState.workout.selectedDayKey;
+
+            banner.innerHTML = WORKOUT_SCHEDULE.map(d => {
+                const isToday = d.dayNumber === jsDay;
+                const isSelected = d.dayKey === selectedKey;
+
+                let cardStyle = d.isRest
+                    ? 'bg-slate-900/60 border-slate-800/80 text-slate-400'
+                    : 'bg-slate-900 border-emerald-500/30 text-white';
+
+                if (isSelected) {
+                    cardStyle = d.isRest
+                        ? 'bg-slate-800 border-slate-500 ring-2 ring-slate-500/40 text-white'
+                        : 'bg-emerald-500/15 border-emerald-400 ring-2 ring-emerald-500/30 text-white';
+                }
+
+                return `
+                    <button onclick="selectWorkoutDay('${d.dayKey}')" class="p-2 sm:p-3 rounded-xl border ${cardStyle} text-left transition flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-center justify-between w-full mb-1">
+                            <span class="text-[11px] sm:text-xs font-extrabold ${d.isRest ? 'text-slate-400' : 'text-emerald-400'}">${d.shortLabel}</span>
+                            ${isToday ? '<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-orange-500 text-slate-950">Hôm nay</span>' : ''}
+                        </div>
+                        <p class="text-[10px] sm:text-xs font-bold truncate w-full">${d.isRest ? '🛌 Nghỉ' : d.title.split('(')[0]}</p>
+                        <span class="hidden sm:inline-block text-[10px] text-slate-400 truncate mt-0.5">${d.focusTag}</span>
+                    </button>
+                `;
+            }).join('');
+
+            if (dayTabs) {
+                dayTabs.innerHTML = WORKOUT_SCHEDULE.map(d => {
+                    const isSelected = d.dayKey === selectedKey;
+                    const activeClass = isSelected
+                        ? (d.isRest ? 'bg-slate-700 text-white border-slate-500' : 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20')
+                        : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:bg-slate-800';
+
+                    return `
+                        <button onclick="selectWorkoutDay('${d.dayKey}')" class="p-3 rounded-xl border ${activeClass} transition text-left flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black uppercase">${d.shortLabel}</span>
+                                <i class="fa-solid ${d.isRest ? 'fa-bed' : 'fa-dumbbell'} text-xs opacity-80"></i>
+                            </div>
+                            <p class="text-xs font-bold mt-1 truncate">${d.isRest ? 'Nghỉ Phục Hồi' : d.title.split('(')[0]}</p>
+                        </button>
+                    `;
+                }).join('');
+            }
+        }
+
+        function selectWorkoutDay(dayKey) {
+            appState.workout.selectedDayKey = dayKey;
+            saveState();
+            renderWeeklyBanner();
+            renderWorkoutSection();
+        }
+
+        function setEquipmentMode(mode) {
+            appState.workout.equipmentMode = mode;
+            saveState();
+
+            const gymBtn = document.getElementById('equipBtn-gym');
+            const homeBtn = document.getElementById('equipBtn-home');
+            if (mode === 'gym') {
+                gymBtn.className = 'flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow';
+                homeBtn.className = 'flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white';
+            } else {
+                homeBtn.className = 'flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow';
+                gymBtn.className = 'flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white';
+            }
+
+            renderWorkoutSection();
+            showToast(mode === 'gym' ? 'Đã chuyển sang bài tập Phòng Gym' : 'Đã chuyển sang bài tập Tạ Đơn Tại Nhà');
+        }
+
+        function renderWorkoutSection() {
+            const dayObj = WORKOUT_SCHEDULE.find(d => d.dayKey === appState.workout.selectedDayKey) || WORKOUT_SCHEDULE[0];
+            const container = document.getElementById('workoutDayContainer');
+            const isGym = appState.workout.equipmentMode === 'gym';
+
+            document.getElementById('workoutDayBadge').textContent = dayObj.shortLabel;
+
+            if (dayObj.isRest) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 text-center space-y-4">
+                        <div class="w-16 h-16 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-3xl mx-auto">
+                            <i class="fa-solid fa-spa"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-white">${dayObj.shortLabel}: ${dayObj.title}</h3>
+                        <p class="text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">${dayObj.tip}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-left">
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                                <p class="text-xs font-bold text-emerald-400 mb-1"><i class="fa-solid fa-drumstick-bite mr-1"></i> 1. Giữ Nguyên Lượng Đạm</p>
+                                <p class="text-[11px] text-slate-400">Ngày nghỉ cơ bắp vẫn đang sửa chữa sợi cơ. Hãy ăn đủ ${appState.profile.targetPro}g Protein.</p>
+                            </div>
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                                <p class="text-xs font-bold text-sky-400 mb-1"><i class="fa-solid fa-bed mr-1"></i> 2. Ngủ Sâu 7 - 8 Tiếng</p>
+                                <p class="text-[11px] text-slate-400">Hormone tăng trưởng (GH) tiết ra mạnh nhất khi bạn ngủ sâu trước 23h00.</p>
+                            </div>
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                                <p class="text-xs font-bold text-orange-400 mb-1"><i class="fa-solid fa-person-walking mr-1"></i> 3. Vận Động Nhẹ</p>
+                                <p class="text-[11px] text-slate-400">Đi bộ 15 phút hoặc giãn cơ giúp máu lưu thông, giảm đau mỏi cơ (DOMS).</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('completedSetsCount').textContent = '0';
+                document.getElementById('totalSetsCount').textContent = '0';
+                document.getElementById('totalVolumeCount').textContent = '0';
+                document.getElementById('workoutProgressPercent').textContent = '100%';
+                document.getElementById('workoutProgressBar').style.width = '100%';
+                return;
+            }
+
+            let totalSets = 0;
+            let completedSets = 0;
+            let totalVolume = 0;
+
+            const exercisesHtml = dayObj.exercises.map((ex, idx) => {
+                const exTitle = isGym ? ex.gymName : ex.homeName;
+                let setsRowsHtml = '';
+
+                for (let s = 1; s <= ex.sets; s++) {
+                    totalSets++;
+                    const logKey = `${ex.id}_set_${s}`;
+                    const savedSet = appState.workout.logs[logKey] || {
+                        weight: ex.defaultWeight,
+                        reps: parseInt(ex.reps, 10) || 10,
+                        done: false
+                    };
+
+                    if (savedSet.done) {
+                        completedSets++;
+                        totalVolume += (Number(savedSet.weight) || 0) * (Number(savedSet.reps) || 0);
+                    }
+
+                    setsRowsHtml += `
+                        <div class="grid grid-cols-12 items-center gap-2 py-2 px-3 rounded-xl ${savedSet.done ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-slate-900/90 border border-slate-800/80'} transition">
+                            <div class="col-span-2 text-xs font-bold ${savedSet.done ? 'text-emerald-400' : 'text-slate-400'}">
+                                Hiệp ${s}
+                            </div>
+                            <div class="col-span-4 flex items-center gap-1.5">
+                                <input type="number" step="0.5" value="${savedSet.weight}" 
+                                    onchange="updateSetLog('${logKey}', 'weight', this.value)"
+                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-white text-center focus:outline-none focus:border-emerald-500">
+                                <span class="text-[11px] text-slate-400">kg</span>
+                            </div>
+                            <div class="col-span-4 flex items-center gap-1.5">
+                                <input type="number" value="${savedSet.reps}" 
+                                    onchange="updateSetLog('${logKey}', 'reps', this.value)"
+                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-white text-center focus:outline-none focus:border-emerald-500">
+                                <span class="text-[11px] text-slate-400">reps</span>
+                            </div>
+                            <div class="col-span-2 flex justify-end">
+                                <button onclick="toggleSetDone('${logKey}', ${ex.rest})" 
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition ${savedSet.done ? 'bg-emerald-500 text-slate-950 font-black shadow shadow-emerald-500/30' : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'}">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="glass-card rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-3">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 font-black text-sm flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+                                <div>
+                                    <h4 class="text-sm sm:text-base font-extrabold text-white">${exTitle}</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">
+                                        <span class="text-emerald-400 font-semibold">${ex.muscle}</span> • Mục tiêu: <strong>${ex.sets} hiệp × ${ex.reps} reps</strong>
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="startRestTimer(${ex.rest})" class="px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-stopwatch"></i> Nghỉ ${ex.rest}s
+                            </button>
+                        </div>
+
+                        <div class="space-y-2 pt-1">
+                            ${setsRowsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="glass-card rounded-2xl p-4 sm:p-5 border border-emerald-500/30 bg-gradient-to-r from-slate-900 to-emerald-950/30">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">${dayObj.shortLabel} • ${dayObj.focusTag}</span>
+                            <h3 class="text-lg sm:text-xl font-black text-white mt-0.5">${dayObj.title}</h3>
+                            <p class="text-xs text-slate-300 mt-1">${dayObj.subtitle}</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-3 pt-3 border-t border-slate-800/80">
+                        <i class="fa-solid fa-bolt text-orange-400 mr-1"></i> <strong>Lưu ý buổi tập:</strong> ${dayObj.tip}
+                    </p>
+                </div>
+                ${exercisesHtml}
+            `;
+
+            // Update Stats
+            document.getElementById('completedSetsCount').textContent = completedSets;
+            document.getElementById('totalSetsCount').textContent = totalSets;
+            document.getElementById('totalVolumeCount').textContent = totalVolume.toLocaleString('vi-VN');
+            const pct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+            document.getElementById('workoutProgressPercent').textContent = `${pct}%`;
+            document.getElementById('workoutProgressBar').style.width = `${pct}%`;
+        }
+
+        function updateSetLog(logKey, field, val) {
+            const current = appState.workout.logs[logKey] || { weight: 20, reps: 10, done: false };
+            current[field] = parseFloat(val) || 0;
+            appState.workout.logs[logKey] = current;
+            saveState();
+            renderWorkoutSection();
+        }
+
+        function toggleSetDone(logKey, restSec) {
+            const current = appState.workout.logs[logKey] || { weight: 20, reps: 10, done: false };
+            current.done = !current.done;
+            appState.workout.logs[logKey] = current;
+            saveState();
+            renderWorkoutSection();
+
+            if (current.done) {
+                startRestTimer(restSec || 90);
+                showToast(`Hoàn thành hiệp! Bắt đầu đếm ngược nghỉ ${restSec}s ⏱️`);
+            }
+        }
+
+        // =========================================================================
+        // 7. BUILT-IN REST TIMER
+        // =========================================================================
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateTimerDisplays() {
+            const formatted = formatTime(restTimerSeconds);
+            document.getElementById('inlineTimerDisplay').textContent = formatted;
+            document.getElementById('modalTimerDisplay').textContent = formatted;
+            const headerBtn = document.getElementById('headerTimerText');
+            if (!isTimerPaused && restTimerSeconds > 0) {
+                headerBtn.textContent = `Nghỉ: ${formatted}`;
+            } else {
+                headerBtn.textContent = 'Bấm giờ nghỉ';
+            }
+        }
+
+        function startRestTimer(seconds) {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            restTimerSeconds = seconds;
+            isTimerPaused = false;
+            updateTimerDisplays();
+            document.getElementById('modalTimerStatus').textContent = 'Đang đếm ngược thời gian nghỉ...';
+
+            restTimerInterval = setInterval(() => {
+                if (!isTimerPaused) {
+                    if (restTimerSeconds > 0) {
+                        restTimerSeconds--;
+                        updateTimerDisplays();
+                    } else {
+                        clearInterval(restTimerInterval);
+                        isTimerPaused = true;
+                        updateTimerDisplays();
+                        document.getElementById('modalTimerStatus').textContent = 'Hết giờ nghỉ! Vào hiệp tiếp theo ngay!';
+                        showToast('🔔 Hết giờ nghỉ! Vào hiệp tiếp theo nào!');
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseRestTimer() {
+            isTimerPaused = !isTimerPaused;
+            document.getElementById('modalTimerStatus').textContent = isTimerPaused ? 'Đã tạm dừng' : 'Đang đếm ngược...';
+            updateTimerDisplays();
+        }
+
+        function resetRestTimer() {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            restTimerSeconds = 90;
+            isTimerPaused = true;
+            updateTimerDisplays();
+            document.getElementById('modalTimerStatus').textContent = 'Đã đặt lại đồng hồ';
+        }
+
+        function toggleTimerModal() {
+            const modal = document.getElementById('timerModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // =========================================================================
+        // 8. NAVIGATION, MODALS & UTILITIES
+        // =========================================================================
+        function switchMainTab(tabName) {
+            ['dashboard', 'workout', 'calculator'].forEach(t => {
+                const content = document.getElementById(`tabContent-${t}`);
+                const deskBtn = document.getElementById(`tabBtn-${t}`);
+                const mobBtn = document.getElementById(`mobTab-${t}`);
+
+                if (t === tabName) {
+                    content.classList.remove('hidden');
+                    if (deskBtn) deskBtn.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-emerald-500 text-slate-950 shadow';
+                    if (mobBtn) mobBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-emerald-400 font-bold text-xs';
+                } else {
+                    content.classList.add('hidden');
+                    if (deskBtn) deskBtn.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white';
+                    if (mobBtn) mobBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-slate-400 font-medium text-xs';
+                }
+            });
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function confirmResetDayNutrition() {
+            appState.dailyNutrition.foods = [];
+            appState.dailyNutrition.waterMl = 0;
+            saveState();
+            renderNutritionDashboard();
+            closeResetModal();
+            showToast('Đã làm mới Calo & Nước uống cho ngày mới!');
+        }
+
+        function confirmResetWorkoutProgress() {
+            Object.keys(appState.workout.logs).forEach(k => {
+                if (appState.workout.logs[k]) {
+                    appState.workout.logs[k].done = false;
+                }
+            });
+            saveState();
+            renderWorkoutSection();
+            closeResetModal();
+            showToast('Đã đặt lại trạng thái các hiệp tập trong tuần!');
+        }
+
+        let toastTimeout = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2600);
+        }
+
+        // =========================================================================
+        // 9. INITIALIZATION ON LOAD
+        // =========================================================================
+        window.onload = function () {
+            loadState();
+            syncCalculatorInputs();
+            renderPresetFoods();
+            renderNutritionDashboard();
+            renderWeeklyBanner();
+            renderWorkoutSection();
+        };
+    </script>
+</body>
+</html>
